@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Jogo {
+  id               Int            @id @default(autoincrement())
+  titulo           String         @db.VarChar(100)
+  preco            Decimal        @db.Decimal(10, 2)
+  lancamento       DateTime
+  descricao        String?
+  imagem           String?
+  destaque         Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now())
+  categoria        Categoria      @relation(fields: [categoriaId], references: [id])
+  categoriaId      Int
+  desenvolvedora   Desenvolvedora @relation(fields: [desenvolvedoraId], references: [id])
+  desenvolvedoraId Int
+  plataformas      Plataforma[]   // Relacionamento muitos-para-muitos automático
+  clientes         ClienteJogo[]  // Relacionamento explícito com a tabela intermediária
+  admin            Admin          @relation(fields: [adminId], references: [id])
+  adminId          Int            @default(1)
+
+  @@map("jogos")
+}
+
+model Plataforma {
+  id    Int    @id @default(autoincrement())
+  nome  String @db.VarChar(50)
+  jogos Jogo[] // Relacionamento muitos-para-muitos automático
+
+  @@map("plataformas")
+}
+
+model Categoria {
+  id    Int    @id @default(autoincrement())
+  nome  String @db.VarChar(50)
+  jogos Jogo[]
+
+  @@map("categorias")
+}
+
+model Desenvolvedora {
+  id    Int    @id @default(autoincrement())
+  nome  String @db.VarChar(100)
+  jogos Jogo[]
+
+  @@map("desenvolvedoras")
+}
+
+model Cliente {
+  id        Int           @id @default(autoincrement())
+  nome      String        @db.VarChar(100)
+  email     String        @unique @db.VarChar(255)
+  senha     String        @db.VarChar(255)
+  recSenha  String?       @db.VarChar(255)
+  jogos     ClienteJogo[] // Relacionamento explícito com a tabela intermediária
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @default(now()) @updatedAt
+
+  @@map("clientes")
+}
+
+model ClienteJogo {
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+  clienteId Int
+  jogo      Jogo    @relation(fields: [jogoId], references: [id])
+  jogoId    Int
+
+  @@id([clienteId, jogoId]) // Definir chave primária composta
+  @@map("cliente_jogos") // Mapeia para a tabela "cliente_jogos"
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  nome      String   @db.VarChar(60)
+  email     String   @unique @db.VarChar(60)
+  senha     String   @db.VarChar(60) // senha deve ser varchar(60)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+  jogos     Jogo[]
+
+  @@map("admins")
+}
